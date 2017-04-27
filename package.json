@@ -1,0 +1,28 @@
+{
+  "name": "es-test",
+  "version": "1.0.0",
+  "description": "Simple eventsourcing test project",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "babel-node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-core": "^6.24.0",
+    "babel-jest": "^19.0.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.0",
+    "eslint": "^3.19.0",
+    "eslint-config-standard": "^10.2.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-node": "^4.2.2",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "jest": "^19.0.2"
+  }
+}
