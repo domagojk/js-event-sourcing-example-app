@@ -19,7 +19,7 @@ function Customer () {
     if (!email) {
       throw new Error('email param is required')
     }
-    if (state.version) {
+    if (getCurrentVersion(state)) {
       throw new Error('can not create same customer more than once')
     }
     return applyEvent(state, CustomerCreatedEvent(uuid, email), true)
