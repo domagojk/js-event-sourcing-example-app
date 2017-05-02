@@ -1,0 +1,5 @@
+const CREATE_CUSTOMER = 'CREATE_CUSTOMER'
+
+export {
+  CREATE_CUSTOMER
+}

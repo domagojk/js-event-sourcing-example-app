@@ -1,6 +1,6 @@
 import { CUSTOMER_CREATED } from '../constants/events'
 
-import { CustomerCreatedEvent } from '../events/CustomerEvents'
+import { CustomerCreated } from '../events/CustomerEvents'
 
 function Customer () {
 
@@ -22,8 +22,31 @@ function Customer () {
     if (getCurrentVersion(state)) {
       throw new Error('can not create same customer more than once')
     }
-    return applyEvent(state, CustomerCreatedEvent(uuid, email), true)
+    return applyEvent(state, CustomerCreated(uuid, email), true)
   }
+
+  /**
+   * Update contact details
+   * 
+   * @param {Object} state 
+   * @param {String} uuid 
+   * @param {String} email 
+   * @returns {Object} newState
+   */
+  function create (state, uuid, email) {
+    if (!uuid) {
+      throw new Error('uuid param is required')
+    }
+    if (!email) {
+      throw new Error('email param is required')
+    }
+    if (getCurrentVersion(state)) {
+      throw new Error('can not create same customer more than once')
+    }
+    return applyEvent(state, CustomerCreated(uuid, email), true)
+  }
+
+  //  Event handlers
 
   function applyCustomerCreated(state, event, isNewEvent) {
     state.uuid = event.uuid

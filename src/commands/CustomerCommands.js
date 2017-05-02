@@ -1,6 +1,6 @@
-import { CUSTOMER_CREATED } from '../constants/events'
+import { CREATE_CUSTOMER } from '../constants/commands'
 
-function CustomerCreated (uuid, email) {
+function CreateCustomer (uuid, email) {
   if (!uuid) {
     throw new Error('invalid uuid param')
   }
@@ -9,7 +9,7 @@ function CustomerCreated (uuid, email) {
   }
   
   //  TODO: rethink on event serialization structure
-  const __name = CUSTOMER_CREATED
+  const __name = CREATE_CUSTOMER
 
   return {
     __name,
@@ -19,5 +19,5 @@ function CustomerCreated (uuid, email) {
 }
 
 export {
-  CustomerCreated
+  CreateCustomer
 }

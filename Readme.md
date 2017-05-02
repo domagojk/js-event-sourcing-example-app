@@ -90,4 +90,17 @@ Not going into details on how `applyEvent` works (basically calls different hand
 }
 ```
 
-Now that we can calculate the state, we can validate commands. Commands are the only way we can produce events. Command is either successful (produces an event) or rejected (throws an error). In Event Sourcing we never actually do something with a command. That can be hard to get used to when starting with Event Sourcing.
+Now that we can calculate the state, we can validate commands. If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (or a system architect) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
+
+So where do events come from? Commands are the only way we can produce events. They can be created by user or by application services (process managers for example) and they instruct app to do something. Command is passed to Command Handler that applies command to a domain class that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
+Note that requests to fetch data are not commands but queries. If a command unintentionally does not change the state of the data is improper command.
+
+For those who are coming from a "classic" N tier/layer architecture this can be confusing at first. For example if a user wants to send an email from within our application, we don't actually send the email from the command handler, but only validate a command against a domain model (are requirements for sending an email met - for example is recipient email address provided, did user exceeded his send email quota, etc).
+Domain model will then create an event that user has requested sending an email. That event will be picked up by an appropriate event handler that will attempt to send an email. That attempt can be a success of a failure and the event handler must report to the domain model by calling an appropriate command (for example, "confirm email sent" command, or some other command in case of failure to send the email).
+Event handler must not create events on its own outside of domain model. Only domain model can be responsible for creating events, because all business logic is defined there (domain model can reject "confirm email sent" command if a model is not in state of "pending email send" for example).
+
+Now, lets define a simple command to create an shopping order and an command handler for it.
+
+//  TODO: define command
+
+Command is either successful (produces an event) or rejected (throws an error). In Event Sourcing we never actually do something with a command. That can be hard to get used to when starting with Event Sourcing.
