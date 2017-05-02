@@ -2,19 +2,19 @@ import { CUSTOMER_CREATED } from '../constants/events'
 
 import { CustomerCreated } from '../events/CustomerEvents'
 
-function Customer () {
+function CustomerAggregate () {
 
   /**
    * Create new customer
    * 
    * @param {Object} state 
-   * @param {String} uuid 
+   * @param {String} id 
    * @param {String} email 
    * @returns {Object} newState
    */
-  function create (state, uuid, email) {
-    if (!uuid) {
-      throw new Error('uuid param is required')
+  function create (state, customerId, email) {
+    if (!customerId) {
+      throw new Error('customerId param is required')
     }
     if (!email) {
       throw new Error('email param is required')
@@ -22,34 +22,25 @@ function Customer () {
     if (getCurrentVersion(state)) {
       throw new Error('can not create same customer more than once')
     }
-    return applyEvent(state, CustomerCreated(uuid, email), true)
+    return applyEvent(state, CustomerCreated(customerId, email), true)
   }
 
   /**
    * Update contact details
    * 
    * @param {Object} state 
-   * @param {String} uuid 
+   * @param {String} customerId 
    * @param {String} email 
    * @returns {Object} newState
    */
-  function create (state, uuid, email) {
-    if (!uuid) {
-      throw new Error('uuid param is required')
-    }
-    if (!email) {
-      throw new Error('email param is required')
-    }
-    if (getCurrentVersion(state)) {
-      throw new Error('can not create same customer more than once')
-    }
-    return applyEvent(state, CustomerCreated(uuid, email), true)
+  function updateContactDetails () {
+    //  TODO: implement
   }
 
   //  Event handlers
 
   function applyCustomerCreated(state, event, isNewEvent) {
-    state.uuid = event.uuid
+    state.customerId = event.customerId
     state.email = event.email
     //  when recreating aggregate form a list of stored events, when applied those events
     //  are kept in commitedEvents set (needed to calc current version)
@@ -101,4 +92,4 @@ function Customer () {
 
 }
 
-export default Customer 
+export default CustomerAggregate 

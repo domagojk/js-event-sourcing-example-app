@@ -18,7 +18,7 @@ This project is also intended to serve as playground for testing ideas and showc
 
 Our application will implement very simple online store business model. We'll work with customers that will create shopping orders (shopping carts). Each customer can have multiple agents (operators) that can use our application simultaneously (that deliberately adds a layer of complexity that we'll need to take care of). Each order will have its simple life cycle (create, modify, complete and cancel). We'll stop there to keep business model very simple and will not cover shipping, payment, etc.
 Every order has an product list (order items), that can be added from our product catalog. Product catalog will be static, again to keep business model very simple (there will be no price or available quantity changes).
-Also, there will be no interaction with remote systems or long running transactions here, as they are not important for basic understanding how this architecture works.
+We will implement email notification functionality when order is completed to showcase how to deal with side-effects (application functionality that is not part of domain logic). There will be no interaction with remote systems or long running transactions here, as they are not important for basic understanding how this architecture works.
 
 ## Domain Driven Design (DDD)
 
@@ -34,9 +34,9 @@ That is where CQRS and Event Sourcing offer much better approach.
 
 CQRS stands for "Command Query Responsibility Segregation". That means that reading and writing are separated into two different parts of application.
 
-In a "classic" N tier/layer architecture objects are transformed through the same layers when reading from and writing to database. When performing write, we map from a view model to a domain entity and then map the entity to a database table. When reading, we do the same transformations in opposite way.
+In a "classic" N tier/layer architecture objects are transformed through the same layers when reading from and writing to database. When performing write, we map from a view model to a domain model and then map the model to a database table. When reading, we do the same transformations in opposite way.
 
-With CQRS, write and read are completely separate parts of application. When performing write, the view creates command and passes it to the command handler. The command handler then applies that command to a domain class. The domain class sends out an event with what happened and an event handler catches these events and persists the changes. On the read side each view has a dedicated "source" (this could be a simple table or a view).
+With CQRS, write and read are completely separate parts of application. When performing write, the view creates command and passes it to the command handler. The command handler then applies that command to a domain model. The domain model sends out an event with what happened and an event handler catches these events and persists the changes. On the read side each view has a dedicated "source" (this could be a simple table or a view).
 
 The idea behind this concept is that the domain layer prepares the data. When the event handler receives the changes in the data, it can handle that in different ways. One way would be to just save the values in the database. However, it could also decide to save a view optimized form of that same data to a secondary storage. That way, when the view gets it, it’s already processed.
 
@@ -73,7 +73,7 @@ const currentState = events.reduce(applyEvent, initialState)
 
 Each event in order they are created will be passed to `applyEvent` handler along with a transient state value from last `applyEvent` invocation (previous event). As described, we always calculate the state based on previous state and current event. This is what makes this concept very powerful and easy to maintain. We never mutate the state directly, what makes testing and debugging a lot easier.
 
-Note that a lot of examples we find on the net are written using objects where they mutate the state of the object using private variables while applying events instead of using reducers, but the concept is the same (although, in my opinion, using functional paradigm produces cleaner code).
+A lot of examples we find on the net are written using object instances where they mutate the state of the object using private variables while applying events instead of using reducers, but the concept is the same (although, in my opinion, using functional paradigm produces cleaner code).
 
 Not going into details on how `applyEvent` works (basically calls different handlers for different events, check [aggregate](src/aggregates/README.md)), reduced state would look like this:
 
@@ -90,17 +90,85 @@ Not going into details on how `applyEvent` works (basically calls different hand
 }
 ```
 
-Now that we can calculate the state, we can validate commands. If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (or a system architect) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
+Now that we can calculate the state, we can validate commands. If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has already happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (or a system architect) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
 
-So where do events come from? Commands are the only way we can produce events. They can be created by user or by application services (process managers for example) and they instruct app to do something. Command is passed to Command Handler that applies command to a domain class that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
-Note that requests to fetch data are not commands but queries. If a command unintentionally does not change the state of the data is improper command.
+So where do events come from? Commands are the only way we can produce events. Commands can be created by user or by application services (process managers or sagas, for example) and they instruct app to do something. Command is passed to Command Handler that applies command to a domain model that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
+Note that requests to fetch data are not commands but queries. If a command unintentionally does not change the state of the data it is improper command.
 
-For those who are coming from a "classic" N tier/layer architecture this can be confusing at first. For example if a user wants to send an email from within our application, we don't actually send the email from the command handler, but only validate a command against a domain model (are requirements for sending an email met - for example is recipient email address provided, did user exceeded his send email quota, etc).
+For those who are coming from a "classic" N tier/layer architecture this can be confusing at first. For example if a user wants to send an email from within our application, we don't actually send the email from the command handler, but only validate a command against a domain model (are requirements for sending an email met - for example is recipient email address provided and valid, did user exceeded his send email quota, etc).
 Domain model will then create an event that user has requested sending an email. That event will be picked up by an appropriate event handler that will attempt to send an email. That attempt can be a success of a failure and the event handler must report to the domain model by calling an appropriate command (for example, "confirm email sent" command, or some other command in case of failure to send the email).
-Event handler must not create events on its own outside of domain model. Only domain model can be responsible for creating events, because all business logic is defined there (domain model can reject "confirm email sent" command if a model is not in state of "pending email send" for example).
+Event handler must not create events on its own outside of domain model. Only domain model can be responsible for creating events, because all business logic is defined there (domain model can reject "confirm email sent" command if it is not in state of "pending email send" for example).
 
 Now, lets define a simple command to create an shopping order and an command handler for it.
 
-//  TODO: define command
+```javascript
+function CreateOrder (uuid, customerId) {
+  if (!uuid) {
+    throw new Error('invalid uuid param')
+  }
+  if (!customerId) {
+    throw new Error('invalid customerId param')
+  }
 
-Command is either successful (produces an event) or rejected (throws an error). In Event Sourcing we never actually do something with a command. That can be hard to get used to when starting with Event Sourcing.
+  return {
+    command: 'CREATE_ORDER',
+    uuid,
+    email
+  }
+}
+```
+
+This function is a command constructor that will validate command parameters requirements and throw exception in case invalid parameters are provided or will return a command object. When serialized this command object would look like this:
+
+```javascript
+{command: "CREATE_ORDER", orderId: 101, customerId: 20}
+```
+
+As said, command does nothing on its own. Command must be sent to appropriate command handler to get executed. One way to do this is to implement command bus. Although command bus and event bus may look similar at first, they are very different. While event bus uses publish/subscribe pattern (when event is emitted, all event listeners subscribed to that emitter will receive that event), command bus must deliver command to exactly one command handler. Using event and command bus architecture is great for application scalability as we can distribute command and event handlers across network (horizontal scaling).
+In this project we will use [deepstream.io](http://deepstream.io) server and javascript client for both event and command bus (it is very convenient for this purpose because it supports publish/subscribe mechanism for event bus and remote procedure calls or RPC for command bus).
+
+Let's create command handler for shopping order commands.
+
+```javascript
+function CustomerCommandHandler () {
+
+  async function createOrder (command) {
+    const orderId = command.orderId
+    const customerId = command.customerId
+    const events = await EventStore.readEvents(orderId)
+    const order = OrderAggregate()
+    const state = order.loadFromHistory(events)
+    const newState = order.create(state, orderId, customerId)
+    const uncomitedEvents = order.getUncommittedChanges(newState)
+    const expectedVersion = order.getCurrentVersion(newState)
+    await EventStore.storeEvents(orderId, uncomitedEvents, expectedVersion)
+  }
+
+  //  ... more handlers would go here
+
+  async function handle(command) {
+    switch (command.__name) {
+      case CREATE_ORDER:
+        return await createOrder(command)
+      case UPDATE_SHIPPING_ADDRESS_ORDER:
+        return await updateShippingAddress(command)
+      //  ...other commands
+    }
+    throw new Error('unrecognised command')
+  }
+
+  return {
+    handle
+  }
+
+}
+```
+
+This stripped code snippet is just to help us visualize how command handler works. Check [command handler](src/commandHandlers/README.md) page for more details on command handler implementation.
+Each command handler must be registered on command bus to allow command bus to pass commands to appropriate handlers. There can be more that one handler of same type registered on command bus. Command bus will act as a load balancer and will pick only one available handler and pass a command to it. This functionality is not guaranteed and depends on type of command bus we implement, but as said before, <b>deepstream</b> does the job and is very easy to implement.
+
+To register command handler to command bus we need to instantiate command handler and register handle method on command bus.
+
+```javascript
+//  TODO: example
+```

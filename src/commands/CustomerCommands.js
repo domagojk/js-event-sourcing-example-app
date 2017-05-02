@@ -1,8 +1,8 @@
 import { CREATE_CUSTOMER } from '../constants/commands'
 
-function CreateCustomer (uuid, email) {
-  if (!uuid) {
-    throw new Error('invalid uuid param')
+function CreateCustomer (customerId, email) {
+  if (!customerId) {
+    throw new Error('invalid customerId param')
   }
   if (!email) {
     throw new Error('invalid email param')
@@ -13,7 +13,7 @@ function CreateCustomer (uuid, email) {
 
   return {
     __name,
-    uuid,
+    customerId,
     email
   }
 }

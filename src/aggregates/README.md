@@ -37,7 +37,7 @@ Every <b>order</b> in our system with all of its event history is a single aggre
 This has another important aspect when thinking about aggregates. When rebuilding aggregate's state from its event history we are only concerned to track the state necessary to fulfill the behavioral contract. What that means is that we should never need to worry on reporting needs. When talking about <b>order</b> aggregate we don't need to calculate <b>order</b> totals for example as that is a part of the read model that is separated from aggregates logic. What we need to take care of is that an <b>order item</b> that has never been added can not be removed (specifically when calling `removeItem` method an exception needs to be thrown if trying to remove an item that has not been added yet to order items).
 
 <b>Order</b> has to hold the information on <b>Customer</b> that it relates to and a list of <b>OrderItems</b>. From a domain perspective <b>Customer</b> is a separate aggregate as it can exists on its own. What that means is that we can build a domain model that defines customers but not orders. For example, if our business model only provides consulting services, we don't really need orders as we can charge our customers by hourly rate. In our current model <b>Customer</b> is reference to a <b>Order</b> and therefore any transaction that is performed within <b>Order</b> context should not affect related <b>Customer</b>.
-This is called <b>bounded context</b> and is a central pattern in Domain-Driven Design.
+This is called <b>bounded context</b> and is a central pattern in Domain-Driven Design. 
 
 We can now try to answer the question on what is aggregate. Let's start with http://cqrs.nu/Faq
 

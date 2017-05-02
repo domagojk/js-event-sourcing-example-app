@@ -1,8 +1,8 @@
 import { CUSTOMER_CREATED } from '../constants/events'
 
-function CustomerCreated (uuid, email) {
-  if (!uuid) {
-    throw new Error('invalid uuid param')
+function CustomerCreated (customerId, email) {
+  if (!customerId) {
+    throw new Error('invalid customerId param')
   }
   if (!email) {
     throw new Error('invalid email param')
@@ -13,7 +13,7 @@ function CustomerCreated (uuid, email) {
 
   return {
     __name,
-    uuid,
+    customerId,
     email
   }
 }
