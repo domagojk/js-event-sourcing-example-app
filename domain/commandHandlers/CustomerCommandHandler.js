@@ -1,14 +1,23 @@
 import { CREATE_CUSTOMER } from '../constants/commands'
 
-import EventStore from '../lib/EventStore'
 import CustomerAggregate from '../aggregates/CustomerAggregate'
 
-function CustomerCommandHandler () {
+/**
+ * Create customer command handler
+ * 
+ * @param {Object} repository Instance of EventStore
+ * @returns 
+ */
+function CustomerCommandHandler (repository) {
+
+  if (!repository) {
+    throw new Error('missing repository param')
+  }
   
   async function createCustomer (command) {
     const customerId = command.customerId
     const customerEmail = command.email
-    const events = await EventStore.readEvents(customerId)
+    const events = await repository.readEvents(customerId)
     //  now that we got event history for customer we can instatiate aggregate root
     //  and recreate its state
     const customer = CustomerAggregate()
@@ -18,7 +27,7 @@ function CustomerCommandHandler () {
     //  if command is successful we can store uncommited events to event store
     const uncomitedEvents = customer.getUncommittedChanges(newState)
     const expectedVersion = customer.getCurrentVersion(newState)
-    await EventStore.storeEvents(customerId, uncomitedEvents, expectedVersion)
+    await repository.storeEvents(customerId, uncomitedEvents, expectedVersion)
   }
 
   async function handle(command) {

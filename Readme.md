@@ -75,7 +75,7 @@ Each event in order they are created will be passed to `applyEvent` handler alon
 
 A lot of examples we find on the net are written using object instances where they mutate the state of the object using private variables while applying events instead of using reducers, but the concept is the same (although, in my opinion, using functional paradigm produces cleaner code).
 
-Not going into details on how `applyEvent` works (basically calls different handlers for different events, check [aggregate](src/aggregates/README.md)), reduced state would look like this:
+Not going into details on how `applyEvent` works (basically calls different handlers for different events, check [aggregate](domain/aggregates/README.md)), reduced state would look like this:
 
 ```javascript
 {
@@ -130,18 +130,18 @@ In this project we will use [deepstream.io](http://deepstream.io) server and jav
 Let's create command handler for shopping order commands.
 
 ```javascript
-function CustomerCommandHandler () {
+function CustomerCommandHandler (repository) {
 
   async function createOrder (command) {
     const orderId = command.orderId
     const customerId = command.customerId
-    const events = await EventStore.readEvents(orderId)
+    const events = await repository.readEvents(orderId)
     const order = OrderAggregate()
     const state = order.loadFromHistory(events)
     const newState = order.create(state, orderId, customerId)
     const uncomitedEvents = order.getUncommittedChanges(newState)
     const expectedVersion = order.getCurrentVersion(newState)
-    await EventStore.storeEvents(orderId, uncomitedEvents, expectedVersion)
+    await repository.storeEvents(orderId, uncomitedEvents, expectedVersion)
   }
 
   //  ... more handlers would go here
@@ -164,8 +164,10 @@ function CustomerCommandHandler () {
 }
 ```
 
-This stripped code snippet is just to help us visualize how command handler works. Check [command handler](src/commandHandlers/README.md) page for more details on command handler implementation.
-Each command handler must be registered on command bus to allow command bus to pass commands to appropriate handlers. There can be more that one handler of same type registered on command bus. Command bus will act as a load balancer and will pick only one available handler and pass a command to it. This functionality is not guaranteed and depends on type of command bus we implement, but as said before, <b>deepstream</b> does the job and is very easy to implement.
+This stripped code snippet is just to help us visualize how command handler works. Check [command handler](commandHandlers/README.md) page for more details on command handler implementation.
+Each command handler must be registered on a command bus to allow the command bus to pass commands to appropriate handlers. There can be more that one handler of same type registered on the command bus. Command bus will act as a load balancer and will pick only one available handler and pass a command to it. This functionality is not guaranteed and depends on type of command bus we implement, but as said before, <b>deepstream</b> does the job and is very easy to implement.
+
+Before explaining how to register command handler on to command bus, let's examine how it is implemented in this application. Command handler will handle only commands that are defined in handle method. Undefined commands will produce error. Command is then passed to dedicated command handler function (like `createOrder` in above example). But before we can execute command, we must first recreate a current state of data model form the event history. We've already seen how to build current state form event list and we can use that state to validate command against business rules (for example our model must throw an error if CreateOrder is trying to get executed on already created order, or if we try to confirm an order without any products added to it). If command is valid, we must create events on what happened. That describes what aggregate is. Aggregate will handle commands, apply events, and have a state model encapsulated within it that allows it to implement the required command validation, thus upholding the business rules of the aggregate. Aggregate is complex topic and covering it in details would be off scope for this project. How aggregates are implemented in this project is covered on [aggregate](domain/aggregates/README.md) page.
 
 To register command handler to command bus we need to instantiate command handler and register handle method on command bus.
 

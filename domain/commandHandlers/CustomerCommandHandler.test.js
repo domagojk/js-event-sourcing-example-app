@@ -1,7 +1,9 @@
 import CustomerCommandHandler from './CustomerCommandHandler'
 import {CreateCustomer} from '../commands/CustomerCommands'
 
-const handler = CustomerCommandHandler()
+import EventStore from '../../lib/EventStore'
+
+const handler = CustomerCommandHandler(EventStore)
 
 const CUSTOMER_1_ID = '1234-5678-9012-3456'
 const CUSTOMER_1_EMAIL = 'test@mail.com'
