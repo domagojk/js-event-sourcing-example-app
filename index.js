@@ -1,12 +1,16 @@
-import CommandBus from './lib/CommandBus'
-import EventStore from './lib/EventStore'
+import DeepstreamServer from 'deepstream.io'
 
 import Api from './api'
 
-const commandBus = CommandBus()
-
-commandBus.start()
-.then(() => {
-  Api(commandBus, EventStore)
+const server = new DeepstreamServer({
+  host: 'localhost',
+  port: 6020
 })
-.catch(console.error)
+
+const api = Api()
+
+server.on('started', () => {
+  api.init()
+})
+
+server.start()
