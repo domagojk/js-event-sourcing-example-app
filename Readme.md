@@ -90,16 +90,16 @@ Not going into details on how `applyEvent` works (basically calls different hand
 }
 ```
 
-Now that we can calculate the state, we can validate commands. If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has already happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (or a system architect) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
+If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has already happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (or a system architect) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
 
-So where do events come from? Commands are the only way we can produce events. Commands can be created by user or by application services (process managers or sagas, for example) and they instruct app to do something. Command is passed to Command Handler that applies command to a domain model that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
+So where do events come from? Commands are the only way we can produce events. Commands can be created by user or by application services (process managers or sagas, for example) and they instruct app to do something. It is a combination of expressed intent (which describes what you want done) as well as the information required to undertake action based on that intent. Command is passed to Command Handler that applies command to a domain model that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
 Note that requests to fetch data are not commands but queries. If a command unintentionally does not change the state of the data it is improper command.
 
 For those who are coming from a "classic" N tier/layer architecture this can be confusing at first. For example if a user wants to send an email from within our application, we don't actually send the email from the command handler, but only validate a command against a domain model (are requirements for sending an email met - for example is recipient email address provided and valid, did user exceeded his send email quota, etc).
 Domain model will then create an event that user has requested sending an email. That event will be picked up by an appropriate event handler that will attempt to send an email. That attempt can be a success of a failure and the event handler must report to the domain model by calling an appropriate command (for example, "confirm email sent" command, or some other command in case of failure to send the email).
 Event handler must not create events on its own outside of domain model. Only domain model can be responsible for creating events, because all business logic is defined there (domain model can reject "confirm email sent" command if it is not in state of "pending email send" for example).
 
-Now, lets define a simple command to create an shopping order and a command handler for it.
+Now, lets define a simple command to create a shopping order and a command handler for it.
 
 ```javascript
 function CreateOrder (uuid, customerId) {
@@ -124,9 +124,7 @@ This factory function will validate command parameters requirements and throw ex
 {command: "CREATE_ORDER", orderId: 101, customerId: 20}
 ```
 
-As said, command does nothing on its own. Command must be sent to appropriate command handler to get executed. One way to do this is to implement *command bus*. The role of the *command bus* is to ensure the transport of a *command* to its *handler*. The *command bus* receives a *command*, which is nothing more than a message describing intent, and passes this onto a *handler* which is then responsible for performing the expected behavior.
-Although *command bus* and *event bus* may look similar at first, they are very different. While *event bus* uses publish/subscribe pattern (when event is emitted, all event listeners subscribed to that emitter will receive that event), *command bus* must deliver command to exactly one command handler. Using event bus and command bus architecture is great for application scalability as we can distribute command and event handlers across network (horizontal scaling).
-In this project we will use [deepstream.io](http://deepstream.io) server and javascript client for both event and command bus (it is very convenient for this purpose because it supports publish/subscribe mechanism for event bus and remote procedure calls (RPC) for command bus).
+As said, command does nothing on its own. Command must be sent to appropriate command handler to get executed. The command handler is the object that receives a command of a pre-defined type and takes action based on its contents.
 
 Let's create command handler for shopping order commands.
 
@@ -165,42 +163,48 @@ function CustomerCommandHandler (repository) {
 }
 ```
 
-This stripped code snippet is just to help us visualize how command handler works. Check [command handler](domain/commandHandlers/README.md) page for more details on command handler implementation.
-Each command handler must be registered on a command bus to allow the command bus to pass commands to appropriate handlers. There can be more that one handler of same type registered on the command bus. Command bus will act as a load balancer and will pick only one available handler and pass a command to it. Not every command bus will work the same way, and implementation may vary. We'll use  <b>deepstream</b> as it does the job and is very easy to implement.
-
-Before explaining how to implement *command bus* and register *command handlers* to it, let's examine how it is implemented in this application. Command handler is invoked by passing a command to its handle method. It will handle only commands that are defined in handle method. Undefined commands will produce error. Since JavaScript does not support function overloading (it is untyped language) we must write a single `handle` method that will check the command type and call specific handler function. Command is then passed to that specific command handler function (like `createOrder` in above example).
+Command handler is invoked by passing a command to its handle method. Since JavaScript does not support function overloading (it is untyped language) we must write a single `handle` method that will check the command type and call specific handler function. Command is then passed to that specific command handler function (like `createOrder` in above example).
 But before we can execute command, we must first recreate the current state of data model form the event history so we can validate business rules against it (for example our model must throw an error if CreateOrder is trying to get executed on already created order, or if we try to confirm an order without any products added to it). If command is valid, we must create events on what happened. That is a domain of an aggregate. Aggregate will handle commands, apply events, and have a state model encapsulated within it that allows it to implement the required command validation, thus upholding the business rules of the aggregate. Aggregate is complex topic and covering it in details would be off scope for this project. There is a lot literature available covering the topic. How aggregates are implemented in this project is covered on [aggregate](domain/aggregates/README.md) page.
 
-To register command handler to command bus we need to instantiate command handler and register handle method on command bus.
+Our command handler factory function has `repository` parameter. The *repository* is the mechanism that provides access to aggregates. The repository acts as a gateway to the actual storage mechanism used to persist the data. In some cases we may want different *repository* implementations for different aggregates (for example we may decide to store customers to some nosql database, and orders to sql database).
+In this application we will our own implementation of [event store](lib/EventStore.js) as a *repository* for all aggregate types. This very simple in-memory event store can return events for given aggregateId (for example customerId, orderId, etc.) It can also return current version of aggregate (total number of stored events for given aggregate), and can store new events while performing version check (to prevent storing uncommitted events if the state of the aggregate has changed while executing command).
+Another important feature of our event store is to serve as *event bus*. Event bus allows publish-subscribe style communication between components without requiring the components to explicitly register with one another (and thus be aware of each other).
+Every event that is committed to event store will also be emitted to all subscribers. Services that are subscribed can then react upon those events.
+
+Let's get back to command handlers. We can consume handlers directly (by instantiating them directly from an api for example), or we can implement *command bus*. The role of the *command bus* is to ensure the transport of a *command* to its *handler*. The *command bus* receives a *command*, which is nothing more than a message describing intent, and passes this onto a *handler* which is then responsible for performing the expected behavior.
+Although *command bus* and *event bus* may look similar at first, they are very different. While *event bus* uses publish/subscribe pattern (when event is emitted, all event listeners subscribed to that emitter will receive that event), *command bus* must deliver command to exactly one command handler. Using event bus and command bus architecture is great for application scalability as we can distribute command and event handlers across network (horizontal scaling).
+There is lot of articles available on the net about distributed command handlers, but in this project, however, we'll keep our command bus simple.
+
+Each command handler must be registered on a command bus to allow the command bus to pass commands to appropriate handlers. To register command handler to command bus we need to instantiate command handler and register handle method on command bus.
 
 ```javascript
 const orderCommandHandler = OrderCommandHandler(repository)
 commandBus.registerHandler(CREATE_ORDER, orderCommandHandler)
 ```
 
-Let's examine how command bus is implemented in this application. As briefly explained above, the responsibility of a Command Bus is to pass a Command onto its Handler. The simplest command bus could just be an object that can register handlers to appropriate command type and can invoke those handlers on specific commands. It does not have to support distributed application architecture (in other words we could simply write it without any dependencies like [EventStore](lib/EventStore.js)). Even then using command bus is convenient because it allows us to decouple our application modules. Since passing a command does not require any dependency other than command bus. We can rewire our architecture without ever worrying about dependencies among modules.
-But using library like `deepstream` our simple command bus becomes quite powerful. It can send command across distributed application architecture and allows us to easily scale our application horizontally.
+Let's examine how command bus is implemented in this application. As briefly explained above, the responsibility of a command bus is to pass a command onto its handler. The simplest command bus could just be an object that can register handlers to appropriate command types and can invoke those handlers on specific commands. It does not have to support distributed application architecture. Even then using command bus is convenient because it allows us to decouple our application modules, since passing a command does not require any dependency other than command bus. We can rewire our architecture without ever worrying about dependencies among modules.
 
 Command bus interface should have at minimum methods for registering command handler and handling commands (routing commands to registered handlers). It should also have methods to unregister handler or to check is handler registered.
 
 ```javascript
 function CommandBus () {
-  async function handle (command) {
+  function handle (command) {
     //  ...
   }
-  async function registerHandler (commandName, handler) {
+  function registerHandler (commandName, handler) {
     //  ...
   }
-  async function unregisterHandler (commandName) {
+  function unregisterHandler (commandName) {
+    //  ...
+  }
+  function isHandlerRegistered (commandName) {
     //  ...
   }
   return {
     handle,
     registerHandler,
-    unregisterHandler
+    unregisterHandler,
+    isHandlerRegistered
   }
 }
 ```
-
-All methods here are asynchronous. If you intend to implement even simpler command bus that will work only inside a scope of an application they can be synchronous. But since we using `deepstream` to enable our command bus to work with distributed application model we must threat all operations asynchronous.
-Check [CommandBus](lib/CommandBus.js) to see how this command bus is actually implemented.
