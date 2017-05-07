@@ -50,7 +50,7 @@ When using Event Sourcing we never delete data, but rather store events on what 
 
 This may seem complicated and inefficient at first, but the fact that our data model is immutable has a lot more advantages over classical CRUD model. Storing events instead of mutating data we can recreate application state in any given moment just by iterating those events and applying transformations on them.
 
-Let's see a quick example of rebuilding state for an shopping order. First we need to create an order to work on, than we need to add some products, define shipping address and confirm the order. If we log an event for each action our event log for that order would look like this:
+Let's see a quick example of rebuilding state for a shopping order. First we need to create an order to work on, than we need to add some products, define shipping address and confirm the order. If we log an event for each action our event log for that order would look like this:
 
 ```javascript
 const events = [
@@ -94,14 +94,14 @@ If you look at event names, they are all in past tense. Although we can technica
 
 ## Commands
 
-So where do events come from? Commands are the only way we can produce events. Commands can be created by user or by application services (process managers or sagas, for example) and they instruct app to do something. It is a combination of expressed intent (which describes what you want done) as well as the information required to undertake action based on that intent. Command is passed to Command Handler that applies command to a domain model that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
+So where do events come from? Commands are the only way we can produce events. Commands can be created by user or by application services (process managers or sagas, for example) and they instruct app to do something. It is a combination of expressed intent (which describes what you want done) as well as the information required to undertake action based on that intent. Command is passed to **command handler** that applies command to a domain model that will produce events on changes that happened to state of the data (or throw an error if command is invalid or requirements for the command are not met).
 Note that requests to fetch data are not commands but queries. If a command unintentionally does not change the state of the data it is improper command.
 
 For those who are coming from a "classic" N tier/layer architecture this can be confusing at first. For example if a user wants to send an email from within our application, we don't actually send the email from the command handler, but only validate a command against a domain model (are requirements for sending an email met - for example is recipient email address provided and valid, did user exceeded his send email quota, etc).
 Domain model will then create an event that user has requested sending an email. That event will be picked up by an appropriate event handler that will attempt to send an email. That attempt can be a success of a failure and the event handler must report to the domain model by calling an appropriate command (for example, "CONFIRM_EMAIL_SENT" command, or some other command in case of failure to send the email).
 Event handler must not create events on its own outside of domain model. Only domain model can be responsible for creating events, because all business logic is defined there (domain model can reject "confirm email sent" command if it is not in state of "pending email send" for example).
 
-Now, lets define a simple command to create a shopping order and a command handler for it.
+Now, lets define a simple **command** to create a shopping order and a **command handler** for it.
 
 ```javascript
 function CreateOrder (uuid, customerId) {
@@ -120,7 +120,7 @@ function CreateOrder (uuid, customerId) {
 }
 ```
 
-This factory function will validate command parameters requirements and throw exception in case invalid parameters are provided or will return a command object. When serialized this command object would look like this:
+This factory function will validate command parameters requirements and throw exception in case invalid parameters are provided or will return a **command object**. When serialized this command object would look like this:
 
 ```javascript
 {command: "CREATE_ORDER", orderId: 101, customerId: 20}
@@ -128,7 +128,7 @@ This factory function will validate command parameters requirements and throw ex
 
 ## Command Handlers
 
-As said, command does nothing on its own. Command must be sent to appropriate command handler to get executed. The command handler is the object that receives a command of a pre-defined type and takes action based on its contents.
+As said, **command** does nothing on its own. Command must be sent to appropriate **command handler** to get executed. The command handler is the object that receives a command of a pre-defined type and takes action based on its contents.
 
 Let's create command handler for shopping order commands.
 
