@@ -1,11 +1,11 @@
-import { CREATE_CUSTOMER } from '../constants/commands'
+import { CREATE_CUSTOMER, UPDATE_CUSTOMER, DEACTIVATE_CUSTOMER } from '../constants/commands'
 
-function CreateCustomer (customerId, email) {
+function CreateCustomer (customerId, name) {
   if (!customerId) {
     throw new Error('invalid customerId param')
   }
-  if (!email) {
-    throw new Error('invalid email param')
+  if (!name) {
+    throw new Error('invalid name param')
   }
   
   //  TODO: rethink on event serialization structure
@@ -14,10 +14,42 @@ function CreateCustomer (customerId, email) {
   return {
     __name,
     customerId,
-    email
+    name
+  }
+}
+
+function UpdateCustomer (customerId, name) {
+  if (!customerId) {
+    throw new Error('invalid customerId param')
+  }
+  if (!name) {
+    throw new Error('invalid name param')
+  }
+
+  const __name = UPDATE_CUSTOMER
+
+  return {
+    __name,
+    customerId,
+    name
+  }
+}
+
+function DeactivateCustomer (customerId) {
+  if (!customerId) {
+    throw new Error('invalid customerId param')
+  }
+
+  const __name = DEACTIVATE_CUSTOMER
+
+  return {
+    __name,
+    customerId
   }
 }
 
 export {
-  CreateCustomer
+  CreateCustomer,
+  UpdateCustomer,
+  DeactivateCustomer
 }

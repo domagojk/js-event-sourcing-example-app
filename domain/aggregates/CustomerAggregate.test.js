@@ -24,10 +24,10 @@ it('should create a new customer', () => {
   expect(version).toBe(0)
   expect(uncommittedChanges.size).toBe(0)
   //  create new customer
-  state = customer.create(state, CUSTOMER_1_ID, 'test@mail.com')
+  state = customer.create(state, CUSTOMER_1_ID, 'Test Customer')
   version = customer.getCurrentVersion(state)
   expect(state.customerId).toBe(CUSTOMER_1_ID)
-  expect(state.email).toBe('test@mail.com')
+  expect(state.name).toBe('Test Customer')
   //  new changes are yet to be written to Event Store
   //  therefore aggreagate version must not change
   //  and applied change must be added to uncommittedChanges set
@@ -38,7 +38,7 @@ it('should create a new customer', () => {
 it('should throw an error on create for an existing customer aggregate', () => {
   //  create event history (that would be loaded from event store in real application)
   const storedEvents = new Set()
-  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'test@mail.com'))
+  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer'))
   //  prepare aggregate with no event history (new aggregate)
   let state = customer.loadFromHistory(storedEvents)
   let version = customer.getCurrentVersion(state)
@@ -47,6 +47,36 @@ it('should throw an error on create for an existing customer aggregate', () => {
   expect(uncommittedChanges.size).toBe(0)
   //  create new customer method on existing customer should throw an error
   expect(() => {
-    customer.create(state, CUSTOMER_1_ID, 'test@mail.com')
+    customer.create(state, CUSTOMER_1_ID, 'Test Customer')
   }).toThrow('can not create same customer more than once')
+})
+
+it('should update an existing customer aggregate', () => {
+  //  create event history (that would be loaded from event store in real application)
+  const storedEvents = new Set()
+  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer'))
+  //  prepare aggregate with no event history (new aggregate)
+  let state = customer.loadFromHistory(storedEvents)
+  let version = customer.getCurrentVersion(state)
+  let uncommittedChanges = customer.getUncommittedChanges(state)
+  expect(version).toBe(1)
+  expect(uncommittedChanges.size).toBe(0)
+  customer.update(state, CUSTOMER_1_ID, 'Test Customer Updated')
+  expect(state.customerId).toBe(CUSTOMER_1_ID)
+  expect(state.name).toBe('Test Customer Updated')
+})
+
+it('should throw an error on updating a non-existing customer aggregate', () => {
+  //  create event history (that would be loaded from event store in real application)
+  const storedEvents = new Set()
+  //  prepare aggregate with no event history (new aggregate)
+  let state = customer.loadFromHistory(storedEvents)
+  let version = customer.getCurrentVersion(state)
+  let uncommittedChanges = customer.getUncommittedChanges(state)
+  expect(version).toBe(0)
+  expect(uncommittedChanges.size).toBe(0)
+  //  create new customer method on existing customer should throw an error
+  expect(() => {
+    customer.update(state, CUSTOMER_1_ID, 'Test Customer Updated')
+  }).toThrow("can not update customer that doesn't exist")
 })

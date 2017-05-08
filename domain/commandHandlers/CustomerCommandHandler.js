@@ -16,14 +16,14 @@ function CustomerCommandHandler (repository) {
   
   async function createCustomer (command) {
     const customerId = command.customerId
-    const customerEmail = command.email
+    const customerName = command.name
     const events = await repository.readEvents(customerId)
     //  now that we got event history for customer we can instatiate aggregate root
     //  and recreate its state
     const customer = CustomerAggregate()
     const state = customer.loadFromHistory(events)
     //  when we have current state we can execute command on aggregate
-    const newState = customer.create(state, customerId, customerEmail)
+    const newState = customer.create(state, customerId, customerName)
     //  if command is successful we can store uncommited events to event store
     const uncomitedEvents = customer.getUncommittedChanges(newState)
     const expectedVersion = customer.getCurrentVersion(newState)

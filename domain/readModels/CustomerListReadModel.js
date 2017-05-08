@@ -1,6 +1,15 @@
-import Rx from 'rxjs'
-
 function CustomerListReadModel (repository, db) {
-  const event$ = Rx.Observable.fromEvent(repository.events, 'stored')
-  event$.subscribe(console.log)
+  function onCustomerCreatedEvent (event) {
+    //  TODO: check if customer exists in read model and throw an exception if true
+    //  TODO: insert customer into db
+  }
+  function onEventStored (event) {
+    switch (event.__name) {
+      case 'CUSTOMER_CREATED':
+        return onCustomerCreatedEvent(event)
+    }
+  }
+  repository.events.on('stored', onEventStored)
 }
+
+export default CustomerListReadModel
