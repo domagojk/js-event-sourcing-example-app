@@ -3,7 +3,7 @@
 ## Motivation
 
 This is my first attempt to write an application based on Command Query Responsibility Segregation (CQRS) + Event Sourcing.
-Throughout the application development I'll try to sum up best explanations I came across in the process of learning and trying to understand this topic. While learning about CQRS and Event Sourcing I found out that practical code examples are very scarce and especially those for JavaScript which is not a common language for developing applications based on this architecture. While JavaScript might not be the best choice for this type of architecture, trying to figure it out while having to understand examples in other programming languages makes it a lot harder. That was my main motivation for creating this project.
+Throughout the application development I'll try to sum up best explanations I came across in the process of learning and trying to understand this topic. While learning about CQRS and Event Sourcing I found out that practical code examples are very scarce and especially those for JavaScript which is not a common language for developing applications based on this pattern. While JavaScript might not be the best choice to use this pattern with, trying to figure it out while having to understand examples in other programming languages makes it even more harder. Besides the programming language, there are many rules of thumb on how to apply this pattern, that are of little use to someone who wants to learn how to apply the pattern. In this project I'll present an opinionated way to do it in JavaScript, and I relay on anyone who will follow this example project to read from other sources about every topic that is presented here.
 
 There are lot of books and articles that explain benefits of using this approach when designing a software architecture and I don't intend to go into deep theory here, but rather provide a starting point to help one to understand what is all about and how it can be done in JavaScript.
 
@@ -22,7 +22,7 @@ We will implement email notification functionality when order is completed to sh
 
 ## Domain Driven Design (DDD)
 
-Learning about CQRS and Event Sourcing, we will often stumble upon terms like Domain or Domain Driven Design. This is a very broad topic but in essence the focus of DDD is on language and making the implicit explicit. In DDD, language is the most important factor. What you want to have is the problem domain explicitly expressed inside your code. As a developer, you want to speak the same language as your business. That's enough theory for now. If found Vaughn Vernon's book "Implementing Domain-Driven Design" very good at covering this topic.
+Learning about CQRS and Event Sourcing, we will often stumble upon terms like Domain or Domain Driven Design. This is a very broad topic but in essence the focus of DDD is on language and making the implicit explicit. In DDD, language is the most important factor. What you want to have is the problem domain explicitly expressed inside your code. As a developer, you want to speak the same language as your business. To be more specific, if a developer is talking to a domain expert (person who knows line of business that developer is creating software for) about some topic they both should use the same terminology. If a development team uses different naming than people that run business in company, communication will greatly suffer. This is very important to keep in mind when we talk about naming events and commands later. That's enough theory for now. If found Vaughn Vernon's book "Implementing Domain-Driven Design" very good at covering this topic.
 
 ## Eventual consistency
 
@@ -90,7 +90,7 @@ Not going into details on how `applyEvent` works (basically calls different hand
 }
 ```
 
-If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has already happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (or a system architect) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
+If you look at event names, they are all in past tense. Although we can technically name them anyway we want to, "event" is always something that has already happened and it should therefore reflect this in it’s name being in the past tense. Good event naming allows domain expert (as described before, person who knows line of business we are creating software for) to infer from the event names alone. It also makes it easier to debug your application. There are many good articles on event naming best practices and going into details would be off scope for this project.
 
 ## Commands
 
