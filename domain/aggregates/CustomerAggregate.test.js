@@ -5,6 +5,11 @@ import { CustomerCreated } from '../events/CustomerEvents'
 const customer = CustomerAggregate()
 
 const CUSTOMER_1_ID = '1234-5678-9012-3456'
+const CUSTOMER_1_NAME = 'Test Customer'
+const CUSTOMER_1_EMAIL = 'test@mail.com'
+const CUSTOMER_1_PASSWORD = 'test1234'
+
+const CUSTOMER_1_NAME_UPDATED = 'Test Customer Updated'
 
 it('should return state with version 0', () => {
   //  we want no event history to test this case
@@ -24,10 +29,10 @@ it('should create a new customer', () => {
   expect(version).toBe(0)
   expect(uncommittedChanges.size).toBe(0)
   //  create new customer
-  state = customer.create(state, CUSTOMER_1_ID, 'Test Customer')
+  state = customer.create(state, CUSTOMER_1_ID, CUSTOMER_1_NAME, CUSTOMER_1_EMAIL, CUSTOMER_1_PASSWORD)
   version = customer.getCurrentVersion(state)
   expect(state.customerId).toBe(CUSTOMER_1_ID)
-  expect(state.name).toBe('Test Customer')
+  expect(state.name).toBe(CUSTOMER_1_NAME)
   //  new changes are yet to be written to Event Store
   //  therefore aggreagate version must not change
   //  and applied change must be added to uncommittedChanges set
@@ -38,7 +43,7 @@ it('should create a new customer', () => {
 it('should throw an error on create for an existing customer aggregate', () => {
   //  create event history (that would be loaded from event store in real application)
   const storedEvents = new Set()
-  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer'))
+  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, CUSTOMER_1_NAME, CUSTOMER_1_EMAIL, CUSTOMER_1_PASSWORD))
   //  prepare aggregate with no event history (new aggregate)
   let state = customer.loadFromHistory(storedEvents)
   let version = customer.getCurrentVersion(state)
@@ -47,23 +52,23 @@ it('should throw an error on create for an existing customer aggregate', () => {
   expect(uncommittedChanges.size).toBe(0)
   //  create new customer method on existing customer should throw an error
   expect(() => {
-    customer.create(state, CUSTOMER_1_ID, 'Test Customer')
+    customer.create(state, CUSTOMER_1_ID, CUSTOMER_1_NAME, CUSTOMER_1_EMAIL, CUSTOMER_1_PASSWORD)
   }).toThrow('can not create same customer more than once')
 })
 
 it('should update an existing customer aggregate', () => {
   //  create event history (that would be loaded from event store in real application)
   const storedEvents = new Set()
-  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer'))
+  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, CUSTOMER_1_NAME, CUSTOMER_1_EMAIL, CUSTOMER_1_PASSWORD))
   //  prepare aggregate with no event history (new aggregate)
   let state = customer.loadFromHistory(storedEvents)
   let version = customer.getCurrentVersion(state)
   let uncommittedChanges = customer.getUncommittedChanges(state)
   expect(version).toBe(1)
   expect(uncommittedChanges.size).toBe(0)
-  customer.update(state, 'Test Customer Updated')
+  customer.update(state, CUSTOMER_1_NAME_UPDATED)
   expect(state.customerId).toBe(CUSTOMER_1_ID)
-  expect(state.name).toBe('Test Customer Updated')
+  expect(state.name).toBe(CUSTOMER_1_NAME_UPDATED)
 })
 
 it('should throw an error on updating a non-existing customer aggregate', () => {
@@ -84,7 +89,7 @@ it('should throw an error on updating a non-existing customer aggregate', () => 
 it('should deactivate an existing customer aggregate', () => {
   //  create event history (that would be loaded from event store in real application)
   const storedEvents = new Set()
-  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer'))
+  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer', CUSTOMER_1_EMAIL, CUSTOMER_1_PASSWORD))
   //  prepare aggregate with no event history (new aggregate)
   let state = customer.loadFromHistory(storedEvents)
   let version = customer.getCurrentVersion(state)
@@ -100,7 +105,7 @@ it('should deactivate an existing customer aggregate', () => {
 it('should reactivate an existing customer aggregate', () => {
   //  create event history (that would be loaded from event store in real application)
   const storedEvents = new Set()
-  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer'))
+  storedEvents.add(CustomerCreated(CUSTOMER_1_ID, 'Test Customer', CUSTOMER_1_EMAIL, CUSTOMER_1_PASSWORD))
   //  prepare aggregate with no event history (new aggregate)
   let state = customer.loadFromHistory(storedEvents)
   let version = customer.getCurrentVersion(state)

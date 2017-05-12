@@ -19,19 +19,27 @@ function CustomerAggregate () {
    * @param {Object} state Current customer aggregate state
    * @param {String} id Customer aggregate Id
    * @param {String} name Customer name
+   * @param {String} email Customer email
+   * @param {String} password Customer password
    * @returns {Object} newState New customer aggregate state
    */
-  function create (state, customerId, name) {
+  function create (state, customerId, name, email, password) {
     if (!customerId) {
       throw new Error('customerId param is required')
     }
     if (!name) {
       throw new Error('name param is required')
     }
+    if (!email) {
+      throw new Error('email param is required')
+    }
+    if (!password) {
+      throw new Error('password param is required')
+    }
     if (aggregateRoot.getCurrentVersion(state)) {
       throw new Error('can not create same customer more than once')
     }
-    return applyEvent(state, CustomerCreated(customerId, name), true)
+    return applyEvent(state, CustomerCreated(customerId, name, email, password), true)
   }
 
   /**

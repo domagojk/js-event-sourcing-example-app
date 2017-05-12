@@ -1,11 +1,17 @@
 import { CUSTOMER_CREATED, CUSTOMER_UPDATED, CUSTOMER_DEACTIVATED, CUSTOMER_REACTIVATED } from '../constants/events'
 
-function CustomerCreated (customerId, name) {
+function CustomerCreated (customerId, name, email, password) {
   if (!customerId) {
     throw new Error('invalid customerId param')
   }
   if (!name) {
     throw new Error('invalid name param')
+  }
+  if (!email) {
+    throw new Error('invalid email param')
+  }
+  if (!password) {
+    throw new Error('invalid password param')
   }
   
   //  TODO: rethink on event serialization structure
@@ -14,7 +20,9 @@ function CustomerCreated (customerId, name) {
   return {
     __name,
     customerId,
-    name
+    name,
+    email,
+    password
   }
 }
 

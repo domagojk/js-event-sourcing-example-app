@@ -16,7 +16,7 @@ This project is also intended to serve as playground for testing ideas and showc
   - Create a public api interface that will consume this model
   - Create a simple web shop client app that will consume that public api
 
-Our application will implement very simple online store business model. We'll work with customers that will create shopping orders (shopping carts). Each customer can have multiple agents (operators) that can use our application simultaneously (that deliberately adds a layer of complexity that we'll need to take care of). Each order will have its simple life cycle (create, modify, complete and cancel). We'll stop there to keep business model very simple and will not cover shipping, payment, etc.
+Our application will implement very simple online store business model. We'll work with customers that will create shopping orders (shopping carts). Each order will have its simple life cycle (create, modify, complete and cancel). We'll stop there to keep business model very simple and will not cover shipping, payment, etc.
 Every order has an product list (order items), that can be added from our product catalog. Product catalog will be static, again to keep business model very simple (there will be no price or available quantity changes).
 We will implement email notification functionality when order is completed to showcase how to deal with side-effects (application functionality that is not part of domain logic). There will be no interaction with remote systems or long running transactions here, as they are not important for basic understanding how this architecture works.
 

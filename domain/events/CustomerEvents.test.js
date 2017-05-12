@@ -1,6 +1,6 @@
 import { CustomerCreated, CustomerUpdated, CustomerDeactivated, CustomerReactivated } from './CustomerEvents'
 
-const customerCreatedEvent = CustomerCreated('1234567890', 'Test Customer')
+const customerCreatedEvent = CustomerCreated('1234567890', 'Test Customer', 'test@mail.com', 'test1234')
 
 const customerUpdatedEvent = CustomerUpdated('1234567890', 'Test Customer Updated')
 
@@ -9,7 +9,7 @@ const customerDeactivatedEvent = CustomerDeactivated('1234567890')
 const customerReactivatedEvent = CustomerReactivated('1234567890')
 
 it('should serialize created event', () => {
-  expect(JSON.stringify(customerCreatedEvent)).toBe('{"__name":"CUSTOMER_CREATED","customerId":"1234567890","name":"Test Customer"}')
+  expect(JSON.stringify(customerCreatedEvent)).toBe('{"__name":"CUSTOMER_CREATED","customerId":"1234567890","name":"Test Customer","email":"test@mail.com","password":"test1234"}')
 })
 
 it('should serialize updated event', () => {

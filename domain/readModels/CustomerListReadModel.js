@@ -21,6 +21,8 @@ function CustomerListReadModel (repository, db) {
     }
     db.insert(CUSTOMERS, event.customerId, {
       name: event.name,
+      email: event.email,
+      password: event.password,
       active: 1
     })
   }
@@ -31,16 +33,15 @@ function CustomerListReadModel (repository, db) {
    * @param {CustomerUpdated} event 
    */
   function onCustomerUpdatedEvent (event) {
+    const customer = db.get(CUSTOMERS, event.customerId)
     //  check if customer does not exist in read model and throw an exception if true
     //  this should never happend but if it does, it indicates that we have serious problem with our domain model
     //  or that our read model has not been rebuilt properly
-    if (!db.get(CUSTOMERS, event.customerId)) {
+    if (!customer) {
       throw new Error('Customer not found')
     }
-    db.update(CUSTOMERS, event.customerId, {
-      name: event.name,
-      active: 1
-    })
+    customer.name = event.name
+    db.update(CUSTOMERS, event.customerId, customer)
   }
 
   /**
