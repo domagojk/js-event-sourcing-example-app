@@ -1,0 +1,5 @@
+const CUSTOMERS = 'CUSTOMERS'
+
+export {
+  CUSTOMERS
+}

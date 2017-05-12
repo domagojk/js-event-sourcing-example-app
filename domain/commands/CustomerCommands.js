@@ -1,4 +1,4 @@
-import { CREATE_CUSTOMER, UPDATE_CUSTOMER, DEACTIVATE_CUSTOMER } from '../constants/commands'
+import { CREATE_CUSTOMER, UPDATE_CUSTOMER, DEACTIVATE_CUSTOMER, REACTIVATE_CUSTOMER } from '../constants/commands'
 
 function CreateCustomer (customerId, name) {
   if (!customerId) {
@@ -48,8 +48,22 @@ function DeactivateCustomer (customerId) {
   }
 }
 
+function ReactivateCustomer (customerId) {
+  if (!customerId) {
+    throw new Error('invalid customerId param')
+  }
+
+  const __name = REACTIVATE_CUSTOMER
+
+  return {
+    __name,
+    customerId
+  }
+}
+
 export {
   CreateCustomer,
   UpdateCustomer,
-  DeactivateCustomer
+  DeactivateCustomer,
+  ReactivateCustomer
 }

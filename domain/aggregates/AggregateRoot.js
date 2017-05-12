@@ -1,5 +1,6 @@
 /**
- * Root Aggregate functions
+ * Root Aggregate factory
+ * Not intended for standalone usage, but for composition with other aggregates
  * 
  * @param {Function} applyEvent Aggregate applyEvent function reference
  * @returns 
