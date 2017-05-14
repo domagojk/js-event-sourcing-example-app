@@ -41,7 +41,7 @@ function AggregateRoot (applyEvent) {
       commitedEvents: new Set(),
       uncommitedChanges: new Set()
     }
-    return [...events].reduce(applyEvent, state)
+    return [...events].reduce((state, event) => applyEvent(state, event), state)
   }
   
   return {
