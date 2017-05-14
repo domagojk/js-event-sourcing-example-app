@@ -1,16 +1,11 @@
 import DeepstreamServer from 'deepstream.io'
 
+import Application from './application'
 import Api from './api'
 
-const server = new DeepstreamServer({
-  host: 'localhost',
-  port: 6020
+const application = Application()
+const api = Api(application.commandBus)
+
+api.listen(3000, function () {
+  console.log('Api listening on port 3000!')
 })
-
-const api = Api()
-
-server.on('started', () => {
-  api.init()
-})
-
-server.start()

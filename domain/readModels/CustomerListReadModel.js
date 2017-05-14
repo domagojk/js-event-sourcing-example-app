@@ -4,10 +4,11 @@ import { CUSTOMERS } from '../constants/collections'
 /**
  * Customer list read model factory
  * 
- * @param {EventStore} repository Instance of EventStore to subscribe `stored` event handler to
+ * @param {EventBus} bus Instance of EventBus to subscribe event handler to
+ * @param {Repository} repository Instance of Repository for rebuilding initial read model state
  * @param {MemDB} db  Instance of MemDB where this read model will store data
  */
-function CustomerListReadModel (repository, db) {
+function CustomerListReadModel (bus, repository, db) {
   /**
    * Handle customer created event
    * 
@@ -79,13 +80,13 @@ function CustomerListReadModel (repository, db) {
   }
 
   /**
-   * Event handler for stored events
-   * Listens for 'stored' event from `repository` event emitter that should emit every event that is stored into repository
+   * Event handler for emited events
+   * Listens for 'event' from `repository` event emitter that should emit every event that is stored into repository
    * 
    * @param {any} event 
    * @returns 
    */
-  function onEventStored (event) {
+  function onEvent (event) {
     switch (event.__name) {
       case CUSTOMER_CREATED:
         return onCustomerCreatedEvent(event)
@@ -97,7 +98,13 @@ function CustomerListReadModel (repository, db) {
         return onCustomerReactivatedEvent(event)
     }
   }
-  repository.events.on('stored', onEventStored)
+  bus.on('event', onEvent)
+
+  // Rebuild read model from event store. Process all events from event store to catchup with the current state.
+  // This is very simplified rebuild process just to showcase how read model can be rebuilt from existing event store.
+  // In practice we would however at least compare the state of read model with event store to process only those events
+  // that occured during the downtime of read model.
+  repository.store.forEach(onEvent)
 }
 
 export default CustomerListReadModel

@@ -1,9 +1,13 @@
 import CustomerCommandHandler from './CustomerCommandHandler'
-import {CreateCustomer} from '../commands/CustomerCommands'
+import { CreateCustomer } from '../commands/CustomerCommands'
 
+import EventBus from '../../lib/EventBus'
 import EventStore from '../../lib/EventStore'
 
-const handler = CustomerCommandHandler(EventStore)
+const eventBus = EventBus()
+const eventStore = EventStore(eventBus)
+
+const handler = CustomerCommandHandler(eventStore)
 
 const CUSTOMER_1_ID = '1234-5678-9012-3456'
 const CUSTOMER_1_NAME = 'Test Customer'

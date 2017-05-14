@@ -1,25 +1,22 @@
-import CommandBus from '../lib/CommandBus'
-import EventStore from '../lib/EventStore'
+import express from 'express'
+import bodyParser from 'body-parser'
 
-import { CREATE_CUSTOMER } from '../domain/constants/commands'
-import CustomerCommandHandler from '../domain/commandHandlers/CustomerCommandHandler'
+import customer from './customer'
 
-function Api () {
+/**
+ * Initiliaze api interface
+ * 
+ * @param {CommandBus} commandBus Instance of CommandBus to handle commands
+ * @returns 
+ */
+function Api (commandBus) {
+  const app = express()
+  app.use(bodyParser.json())
+  app.use(bodyParser.urlencoded({ extended: true }))
 
-  const commandBus = CommandBus('localhost', '6020')
+  customer(app, commandBus)
 
-  const customerCommandHandler = CustomerCommandHandler(EventStore)
-
-  async function init () {
-    await commandBus.connect()
-    //  register command handlers to command bus
-    commandBus.registerHandler(CREATE_CUSTOMER, customerCommandHandler)
-  }
-
-  return {
-    init
-  }
-
+  return app
 }
 
 export default Api
