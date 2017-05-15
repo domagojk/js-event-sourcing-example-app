@@ -1,4 +1,10 @@
-import { CREATE_CUSTOMER, UPDATE_CUSTOMER, DEACTIVATE_CUSTOMER, REACTIVATE_CUSTOMER } from '../constants/commands'
+import {
+  REGISTER_CUSTOMER,
+  CREATE_CUSTOMER, 
+  UPDATE_CUSTOMER, 
+  DEACTIVATE_CUSTOMER, 
+  REACTIVATE_CUSTOMER 
+} from '../constants/commands'
 
 import CustomerAggregate from '../aggregates/CustomerAggregate'
 
@@ -12,6 +18,24 @@ function CustomerCommandHandler (repository) {
 
   if (!repository) {
     throw new Error('missing repository param')
+  }
+
+  async function registerCustomer (command) {
+    const customerId = command.customerId
+    const customerName = command.name
+    const customerEmail = command.email
+    const customerPassword = command.password
+    const events = await repository.readEvents(customerId)
+    //  now that we got event history for customer we can instatiate aggregate root
+    //  and recreate its state
+    const customer = CustomerAggregate()
+    const state = customer.loadFromHistory(events)
+    //  when we have current state we can execute command on aggregate
+    const newState = customer.register(state, customerId, customerName, customerEmail, customerPassword)
+    //  if command is successful we can store uncommited events to event store
+    const uncomitedEvents = customer.getUncommittedChanges(newState)
+    const expectedVersion = customer.getCurrentVersion(newState)
+    await repository.storeEvents(customerId, uncomitedEvents, expectedVersion)
   }
   
   async function createCustomer (command) {
@@ -80,6 +104,8 @@ function CustomerCommandHandler (repository) {
 
   async function handle(command) {
     switch (command.__name) {
+      case REGISTER_CUSTOMER:
+        return await registerCustomer(command)
       case CREATE_CUSTOMER:
         return await createCustomer(command)
       case UPDATE_CUSTOMER:

@@ -1,7 +1,9 @@
 import express from 'express'
 import bodyParser from 'body-parser'
 
-import customer from './customer'
+import Application from './application'
+
+import customer from './controllers/customer'
 
 /**
  * Initiliaze api interface
@@ -9,14 +11,16 @@ import customer from './customer'
  * @param {CommandBus} commandBus Instance of CommandBus to handle commands
  * @returns 
  */
-function Api (commandBus) {
-  const app = express()
-  app.use(bodyParser.json())
-  app.use(bodyParser.urlencoded({ extended: true }))
+function Api (commandBus, memDB) {
+  const application = Application()
 
-  customer(app, commandBus)
+  const api = express()
+  api.use(bodyParser.json())
+  api.use(bodyParser.urlencoded({ extended: true }))
 
-  return app
+  customer(api, application.eventBus, application.commandBus, application.memDB)
+
+  return api
 }
 
 export default Api

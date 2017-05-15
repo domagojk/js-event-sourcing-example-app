@@ -6,14 +6,18 @@ import { CUSTOMERS } from '../constants/collections'
 import { CustomerCreated, CustomerUpdated, CustomerDeactivated, CustomerReactivated } from '../events/CustomerEvents'
 
 import MemDB from '../../lib/MemDB'
+import MemDBReadModelPersistanceAdapter from '../../lib/MemDBReadModelPersistanceAdapter'
+
 import EventBus from '../../lib/EventBus'
 import EventStore from '../../lib/EventStore'
 
 const memDB = MemDB()
-const eventBus = EventBus()
-const eventStore = EventStore(eventBus)
+const memDBReadModelPersistanceAdapter = MemDBReadModelPersistanceAdapter(memDB)
 
-const customerListReadModel = CustomerListReadModel(eventBus, eventStore, memDB)
+const eventBus = EventBus()
+const eventStore = EventStore(eventBus, 'event')
+
+const customerListReadModel = CustomerListReadModel(eventBus, eventStore, memDBReadModelPersistanceAdapter)
 
 const CUSTOMER_1_ID = '1234-5678-9012-3456'
 const CUSTOMER_1_NAME = 'Test Customer'

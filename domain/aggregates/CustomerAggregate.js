@@ -1,6 +1,26 @@
-import { CUSTOMER_CREATED, CUSTOMER_UPDATED, CUSTOMER_DEACTIVATED, CUSTOMER_REACTIVATED } from '../constants/events'
+import { 
+  CUSTOMER_REGISTERED, 
+  CUSTOMER_CREATED, 
+  CUSTOMER_UPDATED, 
+  CUSTOMER_DEACTIVATED, 
+  CUSTOMER_REACTIVATED 
+} from '../constants/events'
 
-import { CustomerCreated, CustomerUpdated, CustomerDeactivated, CustomerReactivated } from '../events/CustomerEvents'
+import { 
+  CustomerRegistered, 
+  CustomerCreated, 
+  CustomerUpdated, 
+  CustomerDeactivated, 
+  CustomerReactivated 
+} from '../events/CustomerEvents'
+
+import {
+  CustomerNotFound,
+  CustomerAlreadyRegisteredError,
+  CustomerAlreadyCreatedError,
+  CustomerNotActiveError,
+  CustomerIsActiveError
+} from '../errors/customerErrors'
 
 import AggregateRoot from './AggregateRoot'
 
@@ -14,7 +34,39 @@ function CustomerAggregate () {
   const aggregateRoot = AggregateRoot(applyEvent)
 
   /**
+   * Register new customer
+   * 
+   * @param {Object} state Current customer aggregate state
+   * @param {String} id Customer aggregate Id
+   * @param {String} name Customer name
+   * @param {String} email Customer email
+   * @param {String} password Customer password
+   * @returns {Object} newState New customer aggregate state
+   */
+  function register (state, customerId, name, email, password) {
+    if (!customerId) {
+      throw new Error('customerId param is required')
+    }
+    if (!name) {
+      throw new Error('name param is required')
+    }
+    if (!email) {
+      throw new Error('email param is required')
+    }
+    if (!password) {
+      throw new Error('password param is required')
+    }
+    if (aggregateRoot.getCurrentVersion(state)) {
+      throw new CustomerAlreadyRegisteredError('can not register same customer more than once')
+    }
+    return applyEvent(state, CustomerRegistered(customerId, name, email, password), true)
+  }
+
+  /**
    * Create new customer
+   * 
+   * Should never be called directly from public command handler!
+   * To maintain email uniquness this command can be executed only by "create customer" domain service
    * 
    * @param {Object} state Current customer aggregate state
    * @param {String} id Customer aggregate Id
@@ -36,8 +88,8 @@ function CustomerAggregate () {
     if (!password) {
       throw new Error('password param is required')
     }
-    if (aggregateRoot.getCurrentVersion(state)) {
-      throw new Error('can not create same customer more than once')
+    if (state.created) {
+      throw new CustomerAlreadyCreatedError('can not create same customer more than once')
     }
     return applyEvent(state, CustomerCreated(customerId, name, email, password), true)
   }
@@ -54,10 +106,10 @@ function CustomerAggregate () {
       throw new Error('name param is required')
     }
     if (!aggregateRoot.getCurrentVersion(state)) {
-      throw new Error("can not update customer that doesn't exist")
+      throw new CustomerNotFound("can not update customer that doesn't exist")
     }
     if (state.deactivated) {
-      throw new Error("can not update customer that has been deactivated")
+      throw new CustomerNotActiveError("can not update customer that has been deactivated")
     }
     return applyEvent(state, CustomerUpdated(state.customerId, name), true)
   }
@@ -70,7 +122,10 @@ function CustomerAggregate () {
    */
   function deactivate (state) {
     if (!aggregateRoot.getCurrentVersion(state)) {
-      throw new Error("can not deactivate customer that doesn't exist")
+      throw new CustomerNotFound("can not deactivate customer that doesn't exist")
+    }
+    if (state.deactivated) {
+      throw new CustomerNotActiveError("can not deactivate customer that is not active")
     }
     return applyEvent(state, CustomerDeactivated(state.customerId), true)
   }
@@ -83,12 +138,43 @@ function CustomerAggregate () {
    */
   function reactivate (state) {
     if (!aggregateRoot.getCurrentVersion(state)) {
-      throw new Error("can not deactivate customer that doesn't exist")
+      throw new CustomerNotFound("can not deactivate customer that doesn't exist")
+    }
+    if (!state.deactivated) {
+      throw new CustomerIsActiveError("can not reactivate customer that is already active")
     }
     return applyEvent(state, CustomerReactivated(state.customerId), true)
   }
 
   //  Event handlers
+
+  /**
+   * Apply customer registered event to current aggregate state
+   * 
+   * @private
+   * @param {Object} state Current customer aggregate state
+   * @param {Object} event Event to apply
+   * @param {Boolean} isNewEvent Adds event to list of uncommited events if true
+   * @returns {Object} newState New customer aggregate state
+   */
+  function applyCustomerRegistered(state, event, isNewEvent) {
+    state.created = 0
+    state.active = 0
+    state.customerId = event.customerId
+    state.name = event.name
+    state.email = event.email
+    state.password = event.password
+    //  when recreating aggregate form a list of stored events, when applied those events
+    //  are kept in commitedEvents set (needed to calc current version)
+    //  if event is applied by a command then isNewEvent is set to true and event is added to
+    //  uncommitedChanges to track changes that are to be written to event store
+    if (isNewEvent) {
+      state.uncommitedChanges.add(event)
+    } else {
+      state.commitedEvents.add(event)
+    }
+    return state
+  }
 
   /**
    * Apply customer created event to current aggregate state
@@ -100,8 +186,12 @@ function CustomerAggregate () {
    * @returns {Object} newState New customer aggregate state
    */
   function applyCustomerCreated(state, event, isNewEvent) {
+    state.created = 1
+    state.active = 1
     state.customerId = event.customerId
     state.name = event.name
+    state.email = event.email
+    state.password = event.password
     //  when recreating aggregate form a list of stored events, when applied those events
     //  are kept in commitedEvents set (needed to calc current version)
     //  if event is applied by a command then isNewEvent is set to true and event is added to
@@ -197,6 +287,8 @@ function CustomerAggregate () {
    */
   function applyEvent(state, event, isNewEvent) {
     switch (event.__name) {
+      case CUSTOMER_REGISTERED:
+        return applyCustomerRegistered(state, event, isNewEvent)
       case CUSTOMER_CREATED:
         return applyCustomerCreated(state, event, isNewEvent)
       case CUSTOMER_UPDATED:
@@ -212,6 +304,7 @@ function CustomerAggregate () {
   return Object.assign(
     {}, 
     {
+      register,
       create,
       update,
       deactivate,

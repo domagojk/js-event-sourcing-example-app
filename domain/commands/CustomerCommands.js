@@ -1,4 +1,35 @@
-import { CREATE_CUSTOMER, UPDATE_CUSTOMER, DEACTIVATE_CUSTOMER, REACTIVATE_CUSTOMER } from '../constants/commands'
+import { 
+  REGISTER_CUSTOMER, 
+  CREATE_CUSTOMER, 
+  UPDATE_CUSTOMER, 
+  DEACTIVATE_CUSTOMER, 
+  REACTIVATE_CUSTOMER
+} from '../constants/commands'
+
+function RegisterCustomer (customerId, name, email, password) {
+  if (!customerId) {
+    throw new Error('invalid customerId param')
+  }
+  if (!name) {
+    throw new Error('invalid name param')
+  }
+  if (!email) {
+    throw new Error('invalid email param')
+  }
+  if (!password) {
+    throw new Error('invalid password param')
+  }
+  
+  const __name = REGISTER_CUSTOMER
+
+  return {
+    __name,
+    customerId,
+    name,
+    email,
+    password
+  }
+}
 
 function CreateCustomer (customerId, name, email, password) {
   if (!customerId) {
@@ -70,6 +101,7 @@ function ReactivateCustomer (customerId) {
 }
 
 export {
+  RegisterCustomer,
   CreateCustomer,
   UpdateCustomer,
   DeactivateCustomer,
