@@ -1,3 +1,10 @@
+/**
+ * This is where domain components are initialized. For this api service, all domain components are initialized here,
+ * but we could easily separate our application into separate services. Then we could initiliaze only domain components
+ * that are needed for each service (for example customer service would initialize only customer related components, and
+ * order service would initilize shopping order components and only those customer components needed for shopping order validation)
+ */
+
 import CommandBus from '../lib/CommandBus'
 import EventBus from '../lib/EventBus'
 import EventStore from '../lib/EventStore'
@@ -19,6 +26,12 @@ import CustomerListReadModel from '../domain/readModels/CustomerListReadModel'
 
 import CustomerCreateService from '../domain/services/CustomerCreateService'
 
+/**
+ * Application factory
+ * Initialize all domain components needed for api application
+ *  
+ * @returns {Application}
+ */
 function Application () {
 
   const commandBus = CommandBus()

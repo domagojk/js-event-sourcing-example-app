@@ -1,3 +1,6 @@
+/**
+ * Customer controller is where all customer related api requests are validated against customer domain model.
+ */
 import passwordHash from 'password-hash'
 
 import { EVENT, ERROR } from '../../domain/constants/eventTypes'
@@ -26,7 +29,7 @@ import {
 } from '../../domain/commands/CustomerCommands'
 
 /**
- * Initialize customer controller routes
+ * Initialize customer controller
  * 
  * @param {any} app Instance of express app
  * @param {EventBus} eventBus Instance of EventBus to subscribe event listeners to
@@ -34,9 +37,13 @@ import {
  * @param {MemDB} memDB Instance of MemDB for projections
  */
 function CustomerController (app, eventBus, commandBus, memDB) {
-
+  /**
+   * Create customer request handler
+   * 
+   * @param {any} req 
+   * @param {any} res 
+   */
   async function createCustomer (req, res) {
-
     const customerId = req.body.customerId
     const name = req.body.name
     const email = req.body.email
@@ -97,6 +104,12 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     }
   }
 
+  /**
+   * Update customer request handler
+   * 
+   * @param {any} req 
+   * @param {any} res 
+   */
   async function updateCustomer (req, res) {
     try {
       const customerId = req.body.customerId
@@ -110,6 +123,12 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     }
   }
 
+  /**
+   * Deactivate customer request handler
+   * 
+   * @param {any} req 
+   * @param {any} res 
+   */
   async function deactivateCustomer (req, res) {
     try {
       const customerId = req.body.customerId
@@ -123,6 +142,12 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     }
   }
 
+  /**
+   * Reactivate customer request handler
+   * 
+   * @param {any} req 
+   * @param {any} res 
+   */
   async function reactivateCustomer (req, res) {
     try {
       const customerId = req.body.customerId
@@ -136,6 +161,12 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     }
   }
 
+  /**
+   * List customers request handler
+   * 
+   * @param {any} req 
+   * @param {any} res 
+   */
   async function listCustomers (req, res) {
     try {
       res.json(await memDB.list(CUSTOMERS))
@@ -144,19 +175,29 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     }
   }
 
+  /**
+   * Customer request exception handler
+   * 
+   * @param {any} ex 
+   * @param {any} res
+   */
   function handleException (ex, res) {
     switch (ex.constructor) {
       case CustomerNotFound:
-        return res.status(404).send('Customer not found')
+        res.status(404).send('Customer not found')
+        break
       case CustomerAlreadyRegisteredError:
-        return res.status(400).send('Customer already registered')
+        res.status(400).send('Customer already registered')
+        break
       case CustomerNotActiveError:
-        return res.status(400).send('Customer already deactivated')
+        res.status(400).send('Customer already deactivated')
+        break
       case CustomerIsActiveError:
-        return res.status(400).send('Customer already active')
+        res.status(400).send('Customer already active')
+        break
       default:
         console.error(ex)
-        return res.status(500).send('Ooops, something went wrong...')
+        res.status(500).send('Ooops, something went wrong...')
     }
   }
 
