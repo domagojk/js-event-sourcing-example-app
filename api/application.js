@@ -47,7 +47,7 @@ function Application () {
   const memDBReadModelPersistanceAdapter = MemDBReadModelPersistanceAdapter(memDB)
 
   //  register all command handlers to command bus instance
-  //  we can than use the command bus to allow domain services to send commands to command handlers
+  //  we can then use the command bus to allow domain services to send commands to command handlers
   const customerCommandHandler = CustomerCommandHandler(eventStore)
   commandBus.registerHandler(REGISTER_CUSTOMER, customerCommandHandler)
   commandBus.registerHandler(CREATE_CUSTOMER, customerCommandHandler)
