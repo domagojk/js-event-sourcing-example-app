@@ -12,7 +12,7 @@ This project is also intended to serve as playground for testing ideas and showc
 ## Goal
 
   - Design a simple model of online store business
-  - Implement that model using CQRS + Event Sourcing architecture
+  - Implement that model using CQRS + Event Sourcing pattern
   - Create a public api interface that will consume this model
   - Create a simple web shop client app that will consume that public api
 
@@ -101,7 +101,7 @@ For those who are coming from a "classic" N tier/layer architecture this can be 
 *Domain model* will then create an *event* that user has requested sending an email. That *event* will be picked up by an appropriate *event handler* that will attempt to send an email. That attempt can be a success of a failure and the *event handler* must report to the *domain model* by calling an appropriate *command* (for example, "CONFIRM_EMAIL_SENT" command, or some other command in case of failure to send the email).
 *Event handler* must not create *events* on its own outside of *domain model*. Only *domain model* can be responsible for creating *events*, because all business logic is defined there (domain model can reject "confirm email sent" command if it is not in state of "pending email send" for example).
 
-Now, lets define a simple **command** to create a shopping order and a **command handler** for it.
+Now, let's define a simple **command** to create a shopping order and a **command handler** for it.
 
 ```javascript
 function CreateOrder (uuid, customerId) {
@@ -174,8 +174,12 @@ But before we can execute *command* against *domain model*, we must first recrea
 
 Our command handler factory function has `repository` parameter. The *repository* is the mechanism that provides access to aggregates. The repository acts as a gateway to the actual storage mechanism used to persist the data. In some cases we may want different *repository* implementations for different aggregates (for example we may decide to store customers to some nosql database, and orders to sql database). *Repository* should support only reading and storing events for a single aggregate. Any other types of queries should be performed against the query database, not the *repository*.
 In this application we will use our own implementation of [event store](lib/EventStore.js) as a *repository* for all aggregate types. This very simple in-memory event store can return events for given aggregateId (for example customerId, orderId, etc.) It can also return current version of aggregate (total number of stored events for given aggregate), and can store new events while performing version check (to prevent storing uncommitted events if the state of the aggregate has changed while executing command).
-Another important feature of our event store is to serve as *event bus*. *Event bus* allows publish-subscribe style communication between components without requiring the components to explicitly register with one another (and thus be aware of each other).
+
+## Event Bus
+
+Repository will emit uncommited events when storing them. We can subscribe **event bus** to those events and then emit them to all *event bus* subscribers. *Event bus* allows publish-subscribe style communication between components without requiring the components to explicitly register with one another (and thus be aware of each other).
 Every event that is committed to event store will also be emitted to all subscribers. Services that are subscribed can then react upon those events.
+We can also use *event bus* to emit *error* events (for example is some application service fails, we can send error event to notify application user on error, or to notify system administrator).
 
 ## Command Bus
 
