@@ -35,7 +35,7 @@ import CustomerCreateService from '../domain/services/CustomerCreateService'
 function Application () {
   //  instantiate infrastructure services
   //  in real application we would use drivers for standalone database services such as mongo, mysql etc.
-  //  or 
+  //  or services like deepstream for event/command bus
   const commandBus = CommandBus()
   const eventBus = EventBus()
   const eventStore = EventStore(eventBus, EVENT)
