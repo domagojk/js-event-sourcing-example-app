@@ -58,10 +58,10 @@ function Application () {
   //  instantiate read models
   //  read models are listening for events from event bus and project them to a view
 
-  //  CustomerListReadModel creates and maintains a list of customers in a single collection
-  //  we'll provide instance of MemDBReadModelPersistanceAdapter to customer read model that will
-  //  persist view data to MemDB instance. if we'd pass a different persistance adapter then data
-  //  could be stored inside mongo collection or sql table
+  //  CustomerListReadModel creates and maintains a list of customers in a single collection.
+  //  We'll provide instance of MemDBReadModelPersistanceAdapter to customer read model that will
+  //  persist view data to MemDB instance. If we'd pass a different persistance adapter then data
+  //  could be stored inside mongo collection or sql table.
   CustomerListReadModel(eventBus, eventStore, memDBReadModelPersistanceAdapter)
   
   //  instantiate domain services
