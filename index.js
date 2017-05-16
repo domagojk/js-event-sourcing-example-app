@@ -1,8 +1,12 @@
-import DeepstreamServer from 'deepstream.io'
+import express from 'express'
+import bodyParser from 'body-parser'
+import customer from './api/customer'
 
-import Api from './api'
+const api = express()
+api.use(bodyParser.json())
+api.use(bodyParser.urlencoded({ extended: true }))
 
-const api = Api()
+customer(api)
 
 api.listen(3000, function () {
   console.log('Api listening on port 3000!')
