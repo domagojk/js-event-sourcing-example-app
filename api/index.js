@@ -8,17 +8,16 @@ import customer from './controllers/customer'
 /**
  * Initiliaze api interface
  * 
- * @param {CommandBus} commandBus Instance of CommandBus to handle commands
  * @returns 
  */
-function Api (commandBus, memDB) {
-  const application = Application()
+function Api () {
+  const { eventBus, commandBus, memDB } = Application()
 
   const api = express()
   api.use(bodyParser.json())
   api.use(bodyParser.urlencoded({ extended: true }))
 
-  customer(api, application.eventBus, application.commandBus, application.memDB)
+  customer(api, eventBus, commandBus, memDB)
 
   return api
 }
