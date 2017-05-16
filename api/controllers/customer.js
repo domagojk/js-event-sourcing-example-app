@@ -49,7 +49,7 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     const email = req.body.email
     const password = passwordHash.generate(req.body.password)
 
-    //  as it was stated in application README, when using CQRS paradigm it must
+    //  as it was stated in application README, when using event sourcing paradigm it must
     //  be taken into account that this system is not immediately consistent but eventualy consistent
     //  we don't actualy create customer at this point, but rather register user instead
     //  then we'll wait for CustomerCreateService instance to validate email uniquness
