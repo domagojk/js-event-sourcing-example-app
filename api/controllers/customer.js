@@ -66,6 +66,7 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     function eventHandler (event) {
       if (event.__name === CUSTOMER_CREATED && event.customerId === customerId) {
         res.status(200).send()
+        //  clean up to avoid memory leaks
         clearTimeout(reqTimeout)
         eventBus.removeListener(EVENT, eventHandler)
         eventBus.removeListener(ERROR, errorHandler)
@@ -78,6 +79,7 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     function errorHandler (event) {
       if (event.__name === CUSTOMER_EXISTING_EMAIL_FOUND && event.customerId === customerId) {
         res.status(400).send('email already registered')
+        //  clean up to avoid memory leaks
         clearTimeout(reqTimeout)
         eventBus.removeListener(EVENT, eventHandler)
         eventBus.removeListener(ERROR, errorHandler)
@@ -85,22 +87,25 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     }
     eventBus.on(ERROR, errorHandler)
 
-    //  create very simple timeout handler (read ahead for why timeout handler is needed)
-    //  in a real app we would at least dispach notification to system admin that something is wrong
+    //  create very simple timeout handler in case CustomerCreateService fails to process USER_REGISTERED event
+    //  if timeout completes, notify user that the request has failed
+    //  in a real app we would also at least dispach notification to system admin that something is wrong
     const reqTimeout = setTimeout(() => {
+      res.status(408).send('service timeout')
+      //  clean up to avoid memory leaks
       eventBus.removeListener(EVENT, eventHandler)
       eventBus.removeListener(ERROR, errorHandler)
-      res.status(408).send('service timeout')
     }, 30000)
 
     try {
       const registerCustomerCommand = RegisterCustomer(customerId, name, email, password)
       await commandBus.handle(registerCustomerCommand)
     } catch (ex) {
+      handleException(ex, res)
+      //  clean up to avoid memory leaks
       clearTimeout(reqTimeout)
       eventBus.removeListener(EVENT, eventHandler)
       eventBus.removeListener(ERROR, errorHandler)
-      handleException(ex, res)
     }
   }
 
