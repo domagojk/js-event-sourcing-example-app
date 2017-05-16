@@ -1,5 +1,1 @@
-const CUSTOMERS = 'CUSTOMERS'
-
-export {
-  CUSTOMERS
-}
+export const CUSTOMERS = 'CUSTOMERS'

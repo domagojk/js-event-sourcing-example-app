@@ -1,7 +1,2 @@
-const EVENT = 'event'
-const ERROR = 'error'
-
-export {
-  EVENT,
-  ERROR
-}
+export const EVENT = 'event'
+export const ERROR = 'error'
