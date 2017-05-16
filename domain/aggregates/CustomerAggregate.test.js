@@ -128,7 +128,7 @@ it('should deactivate an existing customer aggregate', () => {
   customer.deactivate(state)
   expect(state.customerId).toBe(CUSTOMER_1_ID)
   expect(state.name).toBe('Test Customer')
-  expect(state.deactivated).toBeTruthy()
+  expect(state.active).toBeFalsy()
 })
 
 it('should reactivate an existing customer aggregate', () => {
@@ -144,9 +144,9 @@ it('should reactivate an existing customer aggregate', () => {
   customer.deactivate(state)
   expect(state.customerId).toBe(CUSTOMER_1_ID)
   expect(state.name).toBe('Test Customer')
-  expect(state.deactivated).toBeTruthy()
+  expect(state.active).toBeFalsy()
   customer.reactivate(state)
   expect(state.customerId).toBe(CUSTOMER_1_ID)
   expect(state.name).toBe('Test Customer')
-  expect(state.deactivated).toBeUndefined()
+  expect(state.active).toBeTruthy()
 })

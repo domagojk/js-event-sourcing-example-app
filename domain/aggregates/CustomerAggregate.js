@@ -108,7 +108,7 @@ function CustomerAggregate () {
     if (!aggregateRoot.getCurrentVersion(state)) {
       throw new CustomerNotFoundError("can not update customer that doesn't exist")
     }
-    if (state.deactivated) {
+    if (!state.active) {
       throw new CustomerNotActiveError("can not update customer that has been deactivated")
     }
     return applyEvent(state, CustomerUpdated(state.customerId, name), true)
@@ -124,7 +124,7 @@ function CustomerAggregate () {
     if (!aggregateRoot.getCurrentVersion(state)) {
       throw new CustomerNotFoundError("can not deactivate customer that doesn't exist")
     }
-    if (state.deactivated) {
+    if (!state.active) {
       throw new CustomerNotActiveError("can not deactivate customer that is not active")
     }
     return applyEvent(state, CustomerDeactivated(state.customerId), true)
@@ -140,7 +140,7 @@ function CustomerAggregate () {
     if (!aggregateRoot.getCurrentVersion(state)) {
       throw new CustomerNotFoundError("can not deactivate customer that doesn't exist")
     }
-    if (!state.deactivated) {
+    if (state.active) {
       throw new CustomerIsActiveError("can not reactivate customer that is already active")
     }
     return applyEvent(state, CustomerReactivated(state.customerId), true)
@@ -239,10 +239,10 @@ function CustomerAggregate () {
     if (!aggregateRoot.getCurrentVersion(state)) {
       throw new Error("can not deactivate customer that doesn't exist")
     }
-    if (state.deactivated) {
+    if (!state.active) {
       throw new Error("can not deactivate customer that is already deactivated")
     }
-    state.deactivated = 1
+    state.active = 0
     if (isNewEvent) {
       state.uncommitedChanges.add(event)
     } else {
@@ -264,10 +264,10 @@ function CustomerAggregate () {
     if (!aggregateRoot.getCurrentVersion(state)) {
       throw new Error("can not reactivate customer that doesn't exist")
     }
-    if (!state.deactivated) {
-      throw new Error("can not reactivate customer that is not deactivated")
+    if (state.active) {
+      throw new Error("can not reactivate customer that is already active")
     }
-    delete state.deactivated
+    state.active = 1
     if (isNewEvent) {
       state.uncommitedChanges.add(event)
     } else {
