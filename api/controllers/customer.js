@@ -7,7 +7,7 @@ import { EVENT, ERROR } from '../../domain/constants/eventTypes'
 import { CUSTOMERS } from '../../domain/constants/collections'
 
 import {
-  CustomerNotFound,
+  CustomerNotFoundError,
   CustomerAlreadyRegisteredError,
   CustomerAlreadyCreatedError,
   CustomerNotActiveError,
@@ -190,7 +190,7 @@ function CustomerController (app, eventBus, commandBus, memDB) {
    */
   function handleException (ex, res) {
     switch (ex.constructor) {
-      case CustomerNotFound:
+      case CustomerNotFoundError:
         res.status(404).send('Customer not found')
         break
       case CustomerAlreadyRegisteredError:

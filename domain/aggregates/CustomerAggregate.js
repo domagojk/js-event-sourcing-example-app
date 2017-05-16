@@ -15,7 +15,7 @@ import {
 } from '../events/CustomerEvents'
 
 import {
-  CustomerNotFound,
+  CustomerNotFoundError,
   CustomerAlreadyRegisteredError,
   CustomerAlreadyCreatedError,
   CustomerNotActiveError,
@@ -106,7 +106,7 @@ function CustomerAggregate () {
       throw new Error('name param is required')
     }
     if (!aggregateRoot.getCurrentVersion(state)) {
-      throw new CustomerNotFound("can not update customer that doesn't exist")
+      throw new CustomerNotFoundError("can not update customer that doesn't exist")
     }
     if (state.deactivated) {
       throw new CustomerNotActiveError("can not update customer that has been deactivated")
@@ -122,7 +122,7 @@ function CustomerAggregate () {
    */
   function deactivate (state) {
     if (!aggregateRoot.getCurrentVersion(state)) {
-      throw new CustomerNotFound("can not deactivate customer that doesn't exist")
+      throw new CustomerNotFoundError("can not deactivate customer that doesn't exist")
     }
     if (state.deactivated) {
       throw new CustomerNotActiveError("can not deactivate customer that is not active")
@@ -138,7 +138,7 @@ function CustomerAggregate () {
    */
   function reactivate (state) {
     if (!aggregateRoot.getCurrentVersion(state)) {
-      throw new CustomerNotFound("can not deactivate customer that doesn't exist")
+      throw new CustomerNotFoundError("can not deactivate customer that doesn't exist")
     }
     if (!state.deactivated) {
       throw new CustomerIsActiveError("can not reactivate customer that is already active")
