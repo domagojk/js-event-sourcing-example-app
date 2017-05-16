@@ -53,13 +53,15 @@ function CustomerController (app, eventBus, commandBus, memDB) {
     //  be taken into account that this system is not immediately consistent but eventualy consistent.
     //  We don't actualy create customer at this point, but rather register user instead.
     //  Then we'll wait for CustomerCreateService instance to validate email uniquness
-    //  and if email is unique service will create user or dispach error event.
+    //  and if email is unique the service will create user or dispach error event.
 
     //  NOTE:
-    //  this could be even more simplified on api side if we would write our client app 
-    //  to listen for events from application service (via websocket for example)
-    //  in that case we could just issue RegisterCustomer command and let the client handle the success/error events
-    //  but since in this example app, we want rest like api interface, we'll handle events in this controller
+    //  This could be even more simplified on api side if we would write our client app 
+    //  to listen for events from application service (via websocket for example).
+    //  In that case we could just issue RegisterCustomer command and let the client app handle 
+    //  the success and error events. But as we want rest like api interface in this example app, 
+    //  we'll handle those events here and send success response if user has been created or 
+    //  error response if user has not been created.
 
     //  subscribe to EVENT (emitted when model event is commited to event store)
     //  to listen for CUSTOMER_CREATED event
